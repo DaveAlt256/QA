@@ -1,0 +1,138 @@
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
+
+class Stack:
+    def __init__(self):
+        self.head = None
+        self.tail = None
+        self.SIZE = 0
+
+    def Push(self, data):
+        new = Node(data)
+        if self.head is None:
+            self.head = new
+            self.tail = new
+            self.SIZE += 1
+        else:
+            self.tail.next = new
+            self.tail = new
+            self.SIZE += 1
+
+    def Pull(self):
+        if self.tail is None:
+            return None
+        return self.tail.data
+
+    def Pop(self):
+        current = self.head
+        if self.head is None:
+            return None
+
+        if self.head == self.tail:
+            data = self.head.data
+            self.head = None
+            self.tail = None
+            self.SIZE -= 1
+            return data
+
+        while current:
+            if self.tail == current.next:
+                data = current.next.data
+                self.tail = current
+                current.next = None
+                self.SIZE -= 1
+                return data
+            current = current.next
+
+    def show_list(self):
+        current = self.head
+        while current:
+            print(current.data)
+            current = current.next
+
+    def get_size(self):
+        return self.SIZE
+
+    def is_empty(self):
+        return self.head == None
+
+def precedence(op):
+    if op in ('sin', 'cos'):
+        return 4
+    if op == '^':
+        return 3
+    if op in ('*', '/'):
+        return 2
+    if op in ('+', '-'):
+        return 1
+    return 0
+
+all_operetors = ['+', '-', '*', '/', '^', 'sin', 'cos']
+def is_operator(c):
+    return c in all_operetors
+
+def expression_split(expression):
+    if 'sin' in expression:
+        expression = expression.replace('sin', '$')
+    if 'cos' in expression:
+        expression = expression.replace('cos', '@')
+
+    tokens = []
+    for i in expression:
+        if i == '$':
+            tokens.append('sin')
+        if i == '@':
+            tokens.append('cos')
+        if i != ' ' and i not in ('$', '@'):
+            tokens.append(i)
+    return tokens
+
+
+def check_brackets(expression):
+    meet = 0
+    for cur in expression:
+        if cur == '(':
+            meet +=1
+        elif cur == ')':
+            meet -=1
+            if meet <0:
+                return False
+    return meet == 0
+
+
+def shunting_yard(expression):
+    output = []
+    operators = Stack()
+    tokens = expression_split(expression)
+
+    for token in tokens:
+        if token not in all_operetors and token not in ('(', ')'):
+            output.append(token)
+        elif is_operator(token):
+            while (not operators.is_empty() and
+                   precedence(operators.Pull()) >= precedence(token)):
+                output.append(operators.Pop())
+            operators.Push(token)
+        elif token == '(':
+            operators.Push(token)
+        elif token == ')':
+            while not operators.is_empty() and operators.Pull() != '(':
+                output.append(operators.Pop())
+            operators.Pop()
+
+    while not operators.is_empty():
+        output.append(operators.Pop())
+
+    return ' '.join(output)
+
+
+expression = "8 * 2 + 7 - sin(5+ 4)"
+
+if not check_brackets(expression):
+    print('Неверная расстановка скобок')
+else:
+    result = shunting_yard(expression)
+    print("Результат:", result)
+
